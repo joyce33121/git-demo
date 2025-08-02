@@ -3,18 +3,28 @@ import requests
 import pandas as pd
 import json
 import datetime as dt
-url = "https://api.cnyes.com/media/api/v1/newslist/category/headline"
+data = []
+url = "https://api.cnyes.com/media/api/v1/newslist/category/headline" #新聞連結
 payload = {
-	"page":2,
+	"page":1,
 	"limit":30,
 	"isCategoryHeadline":1,
-	"startat":int((dt.datetime.today() - dt.timedelta(days = 11)).timestamp()),
+	"startat":int((dt.datetime.today() - dt.timedelta(days = 10)).timestamp()),
 	"endAt":int(dt.datetime.today().timestamp())
-}
-res = requests.get(url, params = payload)
-jd = json.loads(res.text)
-df = pd.DataFrame(jd['items']['data'])
-df = df[['newsId', 'title', 'summary']]
-df['link'] = df['newsId'].apply(lambda x: 'https://m.cnyes.com/news/id/' + str(x))
+} #參數
+res = requests.get(url, params = payload) #連線鉅亨網
+jd = json.loads(res.text) #解析JSON轉成dict
+data.append(pd.DataFrame(jd['items']['data']))
+
+for i in range(2, (jd['items']['last_page'] + 1)):
+    print("i = ", i)
+	payload["page"] = i
+    res = requests.get(url, params = payload) #連線鉅亨網
+    jd = json.loads(res.text) #解析JSON轉成dict
+    data.append(pd.DataFrame(jd['items']['data']))
+    
+df = pd.contact(data, ignore_index = True) #取出先文資要
+df = df[['newsId', 'title', 'summary']] #取出特定欄位
+df['link'] = df['newsId'].apply(lambda x: 'https://m.cnyes.com/news/id/' + str(x)) #建立連結
 df.to_csv('news.csv', encoding = 'utf-8-sig')
 df
